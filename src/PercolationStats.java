@@ -1,7 +1,9 @@
+import edu.princeton.cs.algs4.StdRandom;
+import edu.princeton.cs.algs4.StdStats;
+
 public class PercolationStats {
 	private Percolation percolation;
-	private int[] results;
-	private int trials;
+	private double[] results;
 	private int size;
 	private double mean = 0.0;
 	private double stddev = 0.0;
@@ -10,22 +12,14 @@ public class PercolationStats {
 		if (n < 1 || trials < 1)
 			throw new IllegalArgumentException();
 		this.size = n;
-		results = new int[trials];
+		results = new double[trials];
 	}
 
 	public double mean() {                         // sample mean of percolation threshold
-		for (int i = 0; i < results.length; i++) {
-			mean += results[i];
-		}
-		mean = mean / results.length;
 		return mean;
 	}
 
 	public double stddev() {                        // sample standard deviation of percolation threshold
-		for (int i = 0; i < results.length; i++) {
-			stddev += (mean - results[i]) * (mean - results[i]);
-		}
-		stddev /= results.length - 1;
 		return stddev;
 	}
 
@@ -38,20 +32,36 @@ public class PercolationStats {
 	}
 
 	private void calculate() {
-		for (int i = 0; i < results.length; i++) {
+		for (int i = 0, a, b; i < results.length; i++) {
 			percolation = new Percolation(size);
 			do {
-				percolation.open();
+				a = StdRandom.uniform(size)+1;
+				b = StdRandom.uniform(size)+1;
+				if (!percolation.isOpen(a, b))
+				{
+					results[i] += 1;
+					percolation.open(a, b);
+				}
 			}
 			while (!percolation.percolates());
+			results[i] /= size*size;
 		}
+		mean = StdStats.mean(results);
+		stddev = StdStats.stddev(results);
 	}
 
 	private double getShift() {
 		return 1.96 * stddev / results.length;
 	}
 
-	public static void main(String[] args) {        // test client (described below)
 
+	public static void main(String[] args) {        // test client (described below)
+		PercolationStats percolationStats = new PercolationStats(2, 1000);
+		percolationStats.calculate();
+
+		System.out.println(percolationStats.mean());
+		System.out.println(percolationStats.stddev());
+		System.out.println(percolationStats.confidenceLo());
+		System.out.println(percolationStats.confidenceHi());
 	}
 }
